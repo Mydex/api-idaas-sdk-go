@@ -1,0 +1,875 @@
+openapi: 3.0.0
+info:
+  description: "Identity as a Service API for member authentication, identifiers,\
+    \ and account management."
+  title: IDaaS API
+  version: 1.0.0
+servers:
+- description: IDaaS host.
+  url: https://idp.mydexid.org
+tags:
+- description: Endpoints for managing member identifiers and invitations
+  name: Identifiers
+- description: Endpoints for MyAccount integration
+  name: MyAccount
+- description: Endpoints for ScotAccount integration
+  name: ScotAccount
+- description: Endpoints for First Time Connection and identification URL setup
+  name: Connections
+paths:
+  /ftc/setup:
+    post:
+      description: Generates a one-time URL for a member to complete First Time Connection.
+        Requires OAuth2.0 authentication.
+      operationId: postFtcSetup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FtcSetupRequestBody"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FtcUrlResponse"
+          description: Successfully created FTC setup URL.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthErrorResponse"
+          description: Unauthorized
+      security:
+      - oauth2:
+        - mydex:pdx
+      summary: Set up a First Time Connection URL.
+      tags:
+      - Connections
+  /identify:
+    post:
+      description: Generates a one-time URL for identifying a member without requiring
+        them to know their MydexID. Requires OAuth2.0 authentication.
+      operationId: postIdentify
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IdentifyRequestBody"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentifyUrlResponse"
+          description: Successfully created identify URL.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthErrorResponse"
+          description: Unauthorized
+      security:
+      - oauth2:
+        - mydex:pdx
+      summary: Set up an identification URL.
+      tags:
+      - Connections
+  /members/notify:
+    post:
+      description: Sends a notification (email or SMS) to a member using their identifier
+        for authentication.
+      operationId: postNotifyMemberViaIdentifier
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotifyMemberRequestBody"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateIdentifierResponse"
+          description: Successfully sent notification.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthErrorResponse"
+          description: Unauthorized
+      security:
+      - oauth2:
+        - mydex:identifiers
+      summary: Send a notification to a member via its identifier.
+      tags:
+      - Identifiers
+  /members/notify/status:
+    patch:
+      description: Updates the status of a notification identifier.
+      operationId: patchNotifyStatus
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNotificationStatusRequestBody"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateIdentifierResponse"
+          description: Successfully updated notification status.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthErrorResponse"
+          description: Unauthorized
+      security:
+      - oauth2:
+        - mydex:identifiers
+      summary: Update the status of a notification.
+      tags:
+      - Identifiers
+  /members/invite:
+    post:
+      description: Stores an invitation code and sends an invitation to the member
+        via their identifier.
+      operationId: postStoreAndSendIdentifierInvite
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteRequestBody"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetInviteResponse"
+          description: Successfully stored invitation and sent notification.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthErrorResponse"
+          description: Unauthorized
+      security:
+      - oauth2:
+        - mydex:identifiers
+      summary: Store an invitation code and send notification.
+      tags:
+      - Identifiers
+  /members/invite/{invite}:
+    get:
+      description: Retrieves the invitation data for a given invite code.
+      operationId: getIdentifierInvite
+      parameters:
+      - description: The invitation code
+        explode: false
+        in: path
+        name: invite
+        required: true
+        schema:
+          example: a1b2c3d4e5f6
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetInviteResponse"
+          description: Successfully retrieved invitation.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthErrorResponse"
+          description: Unauthorized
+      security:
+      - oauth2:
+        - mydex:identifiers
+      summary: Fetch an invitation code and identifier auth data.
+      tags:
+      - Identifiers
+  /members/invite/status:
+    post:
+      description: Checks the status of an invitation without modifying it.
+      operationId: postInviteStatus
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteStatusRequestBody"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InviteStatusResponse"
+          description: Successfully checked invite status.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthErrorResponse"
+          description: Unauthorized
+      security:
+      - oauth2:
+        - mydex:identifiers
+      summary: Check the status of an invite.
+      tags:
+      - Identifiers
+  /members/myaccount/{svt}:
+    get:
+      description: Retrieves the MydexID associated with a MyAccount SVT.
+      operationId: getMydexIdFromMyAccountSvt
+      parameters:
+      - description: The MyAccount security verification token
+        explode: false
+        in: path
+        name: svt
+        required: true
+        schema:
+          example: abc123xyz456
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyAccountLookupResponse"
+          description: Successfully retrieved MydexID.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthErrorResponse"
+          description: Unauthorized
+      security:
+      - oauth2:
+        - mydex:myaccount
+      summary: Check if a MyAccount SVT has an associated MydexID.
+      tags:
+      - MyAccount
+  /members/scotaccount/{sub}:
+    get:
+      description: Retrieves the MydexID associated with a ScotAccount GUID.
+      operationId: getMydexIdFromScotAccountSub
+      parameters:
+      - description: The ScotAccount GUID
+        explode: false
+        in: path
+        name: sub
+        required: true
+        schema:
+          example: 123e4567-e89b-12d3-a456-426614174000
+          format: uuid
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScotAccountLookupResponse"
+          description: Successfully retrieved MydexID.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthErrorResponse"
+          description: Unauthorized
+      security:
+      - oauth2:
+        - mydex:scotaccount
+      summary: Check if a ScotAccount sub GUID has an associated MydexID.
+      tags:
+      - ScotAccount
+components:
+  parameters:
+    MydexId:
+      description: The unique ID of a mydex member
+      explode: false
+      in: path
+      name: mydexid
+      required: true
+      schema:
+        example: "1234"
+        type: string
+      style: simple
+    ScotAccountSub:
+      description: The ScotAccount GUID
+      explode: false
+      in: path
+      name: sub
+      required: true
+      schema:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        format: uuid
+        type: string
+      style: simple
+    MyAccountSvt:
+      description: The MyAccount security verification token
+      explode: false
+      in: path
+      name: svt
+      required: true
+      schema:
+        example: abc123xyz456
+        type: string
+      style: simple
+    InviteCode:
+      description: The invitation code
+      explode: false
+      in: path
+      name: invite
+      required: true
+      schema:
+        example: a1b2c3d4e5f6
+        type: string
+      style: simple
+  schemas:
+    ErrorResponse:
+      example:
+        success: 0
+        message: Member does not exist.
+      properties:
+        success:
+          description: Indicates failure
+          example: 0
+          type: integer
+        message:
+          description: Error message explaining the failure
+          example: Member does not exist.
+          type: string
+      type: object
+    AuthErrorResponse:
+      example:
+        error:
+          message: Access denied
+          reason: The token is invalid or expired
+      properties:
+        error:
+          $ref: "#/components/schemas/AuthErrorResponse_error"
+      type: object
+    FtcSetupRequestBody:
+      description: Request body for First Time Connection setup
+      example:
+        connection_nid: "123"
+        connection_token_hash: abc123hashed
+        return_to: https://example.com/callback
+        mydexid: mydex123
+        version: 1
+        linking_token: unique_linking_token
+      properties:
+        connection_nid:
+          description: The connection NID
+          example: "123"
+          type: string
+        connection_token_hash:
+          description: The hashed connection token
+          example: abc123hashed
+          type: string
+        return_to:
+          description: The URL to return to after connection
+          example: https://example.com/callback
+          type: string
+        mydexid:
+          description: The MydexID if already known (required if version > 1)
+          example: mydex123
+          nullable: true
+          type: string
+        version:
+          description: "The connection version (default 1, must be >= 1)"
+          example: 1
+          type: integer
+        linking_token:
+          description: A unique ID representing the member in the subscriber's backend
+          example: unique_linking_token
+          nullable: true
+          type: string
+      required:
+      - connection_nid
+      - connection_token_hash
+      - return_to
+      type: object
+    IdentifyRequestBody:
+      description: Request body for identification URL setup
+      example:
+        connection_nid: "123"
+        connection_token_hash: abc123hashed
+        return_to: https://example.com/callback
+        linking_token: unique_linking_token
+      properties:
+        connection_nid:
+          description: The connection NID
+          example: "123"
+          type: string
+        connection_token_hash:
+          description: The hashed connection token
+          example: abc123hashed
+          type: string
+        return_to:
+          description: The URL to return to after identification
+          example: https://example.com/callback
+          type: string
+        linking_token:
+          description: A unique ID representing the member in the subscriber's backend
+          example: unique_linking_token
+          nullable: true
+          type: string
+      required:
+      - connection_nid
+      - connection_token_hash
+      - return_to
+      type: object
+    FtcIdentifyUrlResponse:
+      description: Response containing the FTC or Identify URL and QR code
+      properties:
+        url:
+          description: The one-time URL for FTC or identification
+          example: https://laca.example.com/ftc/begin/123/abc123xyz/1
+          type: string
+        qr:
+          description: QR code representation of the URL
+          example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+          type: string
+      type: object
+    FtcUrlResponse:
+      description: Response containing the FTC URL and QR code
+      example:
+        url: https://login.mydex.org/ftc/begin/123/abc123xyz/1
+        qr: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+      properties:
+        url:
+          description: The one-time URL for FTC or identification
+          example: https://login.mydex.org/ftc/begin/123/abc123xyz/1
+          type: string
+        qr:
+          description: QR code representation of the URL
+          example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+          type: string
+      type: object
+    IdentifyUrlResponse:
+      description: Response containing the Identify URL and QR code
+      example:
+        url: https://login.mydex.org/identify/123/abc123xyz
+        qr: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+      properties:
+        url:
+          description: The one-time URL for FTC or identification
+          example: https://login.mydex.org/identify/123/abc123xyz
+          type: string
+        qr:
+          description: QR code representation of the URL
+          example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+          type: string
+      type: object
+    IdentifierAuthObject:
+      description: Authentication data for an identifier
+      example:
+        parent_uuid: 550e8400-e29b-41d4-a716-446655440000
+        app_url: https://example.com
+        client_id: client123
+        con_nid: "456"
+        org_id: org789
+        project_id: proj123
+        item_id: item456
+        type: notification
+      properties:
+        parent_uuid:
+          description: The parent identifier UUID
+          example: 550e8400-e29b-41d4-a716-446655440000
+          format: uuid
+          type: string
+        app_url:
+          description: The application URL
+          example: https://example.com
+          type: string
+        client_id:
+          description: The OAuth2 client ID
+          example: client123
+          type: string
+        con_nid:
+          description: The connection NID
+          example: "456"
+          type: string
+        org_id:
+          description: The organization ID
+          example: org789
+          type: string
+        project_id:
+          description: The project ID
+          example: proj123
+          type: string
+        item_id:
+          description: The item ID
+          example: item456
+          type: string
+        type:
+          description: The type of identifier/auth
+          example: notification
+          type: string
+      type: object
+    NotifyMemberRequestBody:
+      description: Request body for sending a notification to a member
+      example:
+        identifier_auth:
+          parent_uuid: 550e8400-e29b-41d4-a716-446655440000
+          app_url: https://example.com
+          client_id: client123
+          con_nid: "456"
+          org_id: org789
+          project_id: proj123
+          item_id: item456
+          type: notification
+        message_email: Please verify your identity
+        message_sms: Please verify your identity
+      properties:
+        identifier_auth:
+          $ref: "#/components/schemas/IdentifierAuthObject"
+        message_email:
+          description: Email message content
+          example: Please verify your identity
+          type: string
+        message_sms:
+          description: SMS message content
+          example: Please verify your identity
+          nullable: true
+          type: string
+      required:
+      - identifier_auth
+      - message_email
+      type: object
+    UpdateNotificationStatusRequestBody:
+      description: Request body for updating notification status
+      example:
+        identifier: 550e8400-e29b-41d4-a716-446655440000
+      properties:
+        identifier:
+          description: The notification identifier to update
+          example: 550e8400-e29b-41d4-a716-446655440000
+          format: uuid
+          type: string
+      required:
+      - identifier
+      type: object
+    InviteRequestBody:
+      description: Request body for storing and sending an identifier invite
+      example:
+        identifier: 550e8400-e29b-41d4-a716-446655440000
+        app_url: https://example.com
+        client_id: client123
+        con_nid: "456"
+        org_id: org789
+        project_id: proj123
+        item_id: item456
+        type: identifier
+        message_email: Please complete your registration
+        message_sms: Please complete your registration
+      properties:
+        identifier:
+          description: The parent identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+          format: uuid
+          type: string
+        app_url:
+          description: The application URL
+          example: https://example.com
+          type: string
+        client_id:
+          description: The OAuth2 client ID
+          example: client123
+          type: string
+        con_nid:
+          description: The connection NID
+          example: "456"
+          type: string
+        org_id:
+          description: The organization ID
+          example: org789
+          type: string
+        project_id:
+          description: The project ID
+          example: proj123
+          type: string
+        item_id:
+          description: The item ID
+          example: item456
+          type: string
+        type:
+          description: The type of invitation
+          example: identifier
+          type: string
+        message_email:
+          description: Email message content
+          example: Please complete your registration
+          type: string
+        message_sms:
+          description: SMS message content
+          example: Please complete your registration
+          nullable: true
+          type: string
+      required:
+      - app_url
+      - client_id
+      - con_nid
+      - identifier
+      - item_id
+      - message_email
+      - org_id
+      - project_id
+      - type
+      type: object
+    InviteStatusRequestBody:
+      description: Request body for checking invite status
+      example:
+        identifier: 550e8400-e29b-41d4-a716-446655440000
+        app_url: https://example.com
+        client_id: client123
+        con_nid: "456"
+        org_id: org789
+        project_id: proj123
+        item_id: item456
+        type: identifier
+      properties:
+        identifier:
+          description: The parent identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+          format: uuid
+          type: string
+        app_url:
+          example: https://example.com
+          type: string
+        client_id:
+          example: client123
+          type: string
+        con_nid:
+          example: "456"
+          type: string
+        org_id:
+          example: org789
+          type: string
+        project_id:
+          example: proj123
+          type: string
+        item_id:
+          example: item456
+          type: string
+        type:
+          example: identifier
+          type: string
+      required:
+      - app_url
+      - client_id
+      - con_nid
+      - identifier
+      - item_id
+      - org_id
+      - project_id
+      - type
+      type: object
+    IdentifierObject:
+      description: An identifier record
+      properties:
+        id:
+          description: Database ID of the identifier
+          example: "123"
+          type: string
+        identifier:
+          description: The UUID identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+          format: uuid
+          type: string
+        parent_uuid:
+          description: The parent identifier UUID if this is a child
+          example: 660e8400-e29b-41d4-a716-446655440000
+          format: uuid
+          nullable: true
+          type: string
+        type:
+          description: The type of identifier
+          example: identifier
+          type: string
+        created:
+          description: Creation timestamp
+          example: 2024-01-15 10:30:00
+          type: string
+      type: object
+    CreateIdentifierResponse:
+      description: Response when creating an identifier
+      example:
+        success: 1
+        identifier: 550e8400-e29b-41d4-a716-446655440000
+      properties:
+        success:
+          description: Whether the operation succeeded
+          example: 1
+          type: integer
+        identifier:
+          description: The newly created identifier UUID
+          example: 550e8400-e29b-41d4-a716-446655440000
+          format: uuid
+          type: string
+      type: object
+    GetIdentifiersResponse:
+      description: Response when getting all identifiers for a member
+      properties:
+        success:
+          example: 1
+          type: integer
+        identifiers:
+          items:
+            $ref: "#/components/schemas/IdentifierObject"
+          type: array
+      type: object
+    GetInviteResponse:
+      description: Response when getting an invitation
+      example:
+        success: 1
+        invite_url_code: a1b2c3d4e5f6
+        parent_uuid: 550e8400-e29b-41d4-a716-446655440000
+        app_url: https://example.com
+        client_id: client123
+        con_nid: "456"
+        org_id: org789
+        project_id: proj123
+        item_id: item456
+        type: identifier
+      properties:
+        success:
+          example: 1
+          type: integer
+        invite_url_code:
+          description: The invitation URL code
+          example: a1b2c3d4e5f6
+          type: string
+        parent_uuid:
+          description: The parent identifier UUID
+          example: 550e8400-e29b-41d4-a716-446655440000
+          format: uuid
+          type: string
+        app_url:
+          description: The application URL
+          example: https://example.com
+          type: string
+        client_id:
+          description: The OAuth2 client ID
+          example: client123
+          type: string
+        con_nid:
+          description: The connection NID
+          example: "456"
+          type: string
+        org_id:
+          description: The organization ID
+          example: org789
+          nullable: true
+          type: string
+        project_id:
+          description: The project ID
+          example: proj123
+          nullable: true
+          type: string
+        item_id:
+          description: The item ID
+          example: item456
+          nullable: true
+          type: string
+        type:
+          description: The type of invitation
+          example: identifier
+          type: string
+      type: object
+    InviteStatusResponse:
+      description: Response for checking invite status
+      example:
+        success: 1
+        status: pending
+      properties:
+        success:
+          description: Whether the invite exists
+          example: 1
+          type: integer
+        status:
+          description: "The status of the invite (pending, used, expired)"
+          example: pending
+          type: string
+      type: object
+    MyAccountLookupResponse:
+      description: The MydexID associated with the MyAccount svt
+      example: mydex123
+      type: string
+    ScotAccountLookupResponse:
+      description: The MydexID associated with the ScotAccount sub
+      example: mydex123
+      type: string
+    AuthErrorResponse_error:
+      example:
+        message: Access denied
+        reason: The token is invalid or expired
+      properties:
+        message:
+          example: Access denied
+          type: string
+        reason:
+          example: The token is invalid or expired
+          type: string
+      type: object
+  securitySchemes:
+    oauth2:
+      flows:
+        clientCredentials:
+          scopes:
+            mydex:identifiers: Access to identifiers endpoints
+            mydex:scotaccount: Access to ScotAccount-to-MydexID mapping
+            mydex:myaccount: Access to MyAccount-to-MydexID mapping
+            mydex:pdx: Global access scope for connections endpoints
+          tokenUrl: https://op.mydexid.org/oauth2/token
+      type: oauth2
